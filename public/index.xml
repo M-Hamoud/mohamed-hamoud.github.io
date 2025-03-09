@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mohamed Hamoud</title>
+    <link>http://localhost:1313/</link>
+    <description>Recent content on Mohamed Hamoud</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title></title>
+      <link>http://localhost:1313/cv/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/cv/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title></title>
+      <link>http://localhost:1313/research/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/research/</guid>
+      <description>&lt;h2 id=&#34;research&#34;&gt;RESEARCH&lt;/h2&gt;&#xA;&lt;h3 id=&#34;monetary-policy-surprises-and-the-term-structure-of-equity-premia&#34;&gt;&lt;a href=&#34;https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5160318&#34;&gt;Monetary Policy Surprises and the Term Structure of Equity Premia&lt;/a&gt;&lt;/h3&gt;&#xA;&lt;blockquote&gt;&#xA;&lt;p&gt;&lt;em&gt;Job Market Paper&lt;/em&gt;&lt;/p&gt;&lt;/blockquote&gt;&#xA;&lt;p&gt;&lt;strong&gt;Abstract:&lt;/strong&gt; This paper analyzes the impact of monetary policy surprises on the term structure of equity premia in order to better understand the channels driving stock market reactions to monetary policy surprises. To achieve this, this paper introduces a direct method to estimate equity premia for specific maturities using data from dividend futures markets. I find that a surprise short rate cut decreases equity premia both at the short end and the long end of the term structure and that the impact is twice as strong at the short end while still being significant at the long end. Specifically, a surprise rate cut that lowers the 1-year yield by 1 basis point results in a 4to 6-basis-point decrease in short-term equity premia and a 2-to 3-basispoint decrease in long-term equity premia, on average. The results provide evidence that the risk premium channel plays a significant role in monetary policy transmission and that monetary policy surprises significantly impact real rates even beyond horizons over which nominal rigidities are thought to be resolved.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title></title>
+      <link>http://localhost:1313/teaching/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/teaching/</guid>
+      <description>&lt;h2 id=&#34;teaching-experience&#34;&gt;TEACHING EXPERIENCE&lt;/h2&gt;&#xA;&lt;p&gt;&lt;strong&gt;University of Zurich, Switzerland&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Advanced Financial Economics (&lt;em&gt;Assistant to Prof. Yucheng Yang&lt;/em&gt;, 2024-2025)&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Recepient of &lt;strong&gt;Award for Excellence in Teaching&lt;/strong&gt; 2024&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;/li&gt;&#xA;&lt;li&gt;Advanced Financial Economics (&lt;em&gt;Assistant to Prof. Felix Kübler&lt;/em&gt;, 2021-2023)&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;&lt;strong&gt;Middle East Technical University, Turkey&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;Introduction to Econometrics II (&lt;em&gt;Assistant to Prof. Ozan Eruygur&lt;/em&gt;, Fall 2017/2018)&lt;/li&gt;&#xA;&lt;li&gt;Macroeconomic Theory II (&lt;em&gt;Assistant to Prof. Kağan Parmaksiz&lt;/em&gt;, Spring 2015/2016)&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+  </channel>
+</rss>
