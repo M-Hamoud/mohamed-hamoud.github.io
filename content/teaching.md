@@ -1,8 +1,8 @@
-## TEACHING EXPERIENCE
+## TEACHING
 
 **University of Zurich, Switzerland** 
 - Advanced Financial Economics (*Assistant to Prof. Yucheng Yang*, 2024-2025)
-    - Recepient of **Award for Excellence in Teaching** 2024
+    - Recipient of **Award for Excellence in Teaching** 2024
 - Advanced Financial Economics (*Assistant to Prof. Felix Kübler*, 2021-2023)
 
 **Middle East Technical University, Turkey** 
