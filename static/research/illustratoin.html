@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>PC Rotation via Cosine Similarity (anime.js)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0f1221;
+            --text: #e6e8f2;
+            --muted: #9aa3b2;
+            --pc: #22d3ee;
+            /* cyan */
+            --pc2: #fbbf24;
+            /* amber (projection foots) */
+            --target: #f472b6;
+            /* magenta (dashed) */
+            --points: rgba(250, 204, 21, 0.75);
+            --plane-bg: rgba(120, 125, 165, 0.08);
+            --plane-border: rgba(180, 188, 255, 0.15);
+            --grid: rgba(255, 255, 255, 0.06);
+            --grid-bold: rgba(255, 255, 255, 0.13);
+            --shadow: 0 40px 120px rgba(0, 0, 0, 0.45), inset 0 20px 60px rgba(255, 255, 255, 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+            background: radial-gradient(1250px 800px at 50% -10%, #20274d 0%, var(--bg) 60%);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Tall container to provide scroll progress while the scene stays sticky */
+        #scroller {
+            height: 280vh;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Pinned scene */
+        .scene {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: grid;
+            place-items: center;
+            perspective: 1600px;
+            overflow: hidden;
+        }
+
+        .hud {
+            position: absolute;
+            top: 5vh;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            width: min(720px, 92vw);
+            z-index: 20;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .hud h1 {
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: 0.2px;
+            text-shadow: 0 3px 20px rgba(0, 0, 0, 0.35);
+            order: 1;
+        }
+
+        .hud h2 {
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: 0.2px;
+            text-shadow: 0 3px 20px rgba(0, 0, 0, 0.35);
+            order: 1;
+        }
+
+        .hud p {
+            font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+            color: var(--muted);
+            order: 2;
+        }
+
+        .hud .final {
+            opacity: 0;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            top: calc(2.2rem + 24px);
+        }
+
+        .rotator {
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        .plane {
+            width: min(680px, 90vw);
+            aspect-ratio: 1 / 1;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px solid var(--plane-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            /* transform-style: preserve-3d; */
+            transform: translateY(clamp(48px, 12vh, 140px)) rotateX(56deg) rotateZ(-0deg) translateZ(0px);
+            position: relative;
+            overflow: hidden;
+            will-change: transform;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Grid */
+        .grid-line {
+            stroke: var(--grid);
+            stroke-width: 1;
+        }
+
+        .grid-line.bold {
+            stroke: var(--grid-bold);
+            stroke-width: 1.4;
+        }
+
+        /* Axes */
+        .pc-axis {
+            stroke: var(--pc);
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        .pc-label {
+            fill: var(--pc);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+
+        .target-axis {
+            stroke: var(--target);
+            stroke-width: 3;
+            stroke-dasharray: 8 8;
+            stroke-linecap: round;
+            opacity: 0.9;
+        }
+
+        .target-label {
+            fill: var(--target);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+
+        /* Points + projections */
+        .point {
+            fill: var(--points);
+        }
+
+        .projection {
+            stroke: #ffffffcc;
+            stroke-dasharray: 6 6;
+            stroke-width: 1.5;
+        }
+
+        .foot {
+            fill: var(--pc2);
+            stroke: none;
+        }
+
+        .coord-label {
+            fill: #ffffffcc;
+            font-size: 11px;
+            font-weight: 500;
+            paint-order: stroke;
+            stroke: rgba(0, 0, 0, 0.2);
+            stroke-width: 2;
+            stroke-linejoin: round;
+        }
+
+        .metrics {
+            position: absolute;
+            bottom: 3.5vh;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 13px;
+            color: var(--muted);
+            background: rgba(30, 35, 60, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            padding: 8px 14px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 12px 50px rgba(0, 0, 0, 0.35);
+            z-index: 12;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+        }
+
+        #find-optimal-btn {
+            position: relative;
+            align-self: center;
+            z-index: 30;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(30, 35, 60, 0.6);
+            color: var(--text);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: background-color 0.2s, border-color 0.2s, transform 0.08s;
+            pointer-events: auto;
+            order: 3; /* ensure order: title (1), text (2), button (3) */
+        }
+
+        #find-optimal-btn:hover {
+            background-color: rgba(40, 48, 80, 0.8);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .rotator {
+                transform: none !important;
+            }
+        }
+
+        /* Mobile-specific adjustments */
+        @media (max-width: 640px) {
+            #scroller {
+                height: 300vh;
+            }
+
+            .hud {
+                top: 2vh;
+                width: min(720px, 88vw);
+                gap: 8px;
+            }
+
+            .hud h2 {
+                font-size: clamp(1.3rem, 5vw, 1.8rem);
+            }
+
+            .hud p {
+                font-size: clamp(0.875rem, 3.5vw, 0.95rem);
+                line-height: 1.4;
+            }
+
+            .plane {
+                width: min(520px, 85vw);
+                transform: translateY(10vh) rotateX(50deg) rotateZ(0deg);
+            }
+
+            .pc-label,
+            .target-label {
+                font-size: 11.5px;
+                /* Smaller labels inside SVG */
+            }
+
+            .coord-label {
+                font-size: 9.5px;
+            }
+
+            .metrics {
+                bottom: 10vh;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px 12px;
+                padding: 10px 14px;
+                border-radius: 12px;
+                font-size: 12px;
+                max-width: 90vw;
+            }
+
+            #find-optimal-btn {
+                font-size: 12px;
+                padding: 10px 16px;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="scroller">
+        <section class="scene">
+            <div class="hud">
+                <h2>Rotate PCs to a Target Using Cosine Similarity</h2>
+                <p id="explanation">
+                    <!-- This text will be updated dynamically via JavaScript -->
+                </p>
+                <button id="find-optimal-btn">Find Optimal Alignment</button>
+            </div>
+
+            <div class="rotator" id="rotator">
+                <div class="plane" id="plane">
+                    <svg id="viz" viewBox="-250 -250 500 500" preserveAspectRatio="xMidYMid meet">
+                        <!-- Grid -->
+                        <g id="grid"></g>
+
+                        <!-- Data points -->
+                        <g id="points"></g>
+
+                        <!-- Target axes (fixed, dashed) -->
+                        <g id="targets"></g>
+
+                        <!-- PC axes (rotating, solid) -->
+                        <g id="pc-axes">
+                            <line id="pc1" class="pc-axis" x1="-220" y1="0" x2="220" y2="0"></line>
+                            <text id="pc1-label" class="pc-label" x="228" y="5">PC 1</text>
+                            <line id="pc2" class="pc-axis" x1="0" y1="-220" x2="0" y2="220"></line>
+                            <text id="pc2-label" class="pc-label" x="6" y="-228">PC 2</text>
+                        </g>
+
+                        <!-- Projections -->
+                        <g id="projections"></g>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="metrics">
+                <span>Rotation Angle: <span id="theta-deg">0.0°</span></span>
+                <span class="separator"
+                    style="border-left: 1px solid rgba(255,255,255,0.1); height: 14px; display: inline-block;"></span>
+                <span>cos‑sim: <span id="cos-sim">0.00</span></span>
+            </div>
+
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Config
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const R = 230;
+            const NUM_POINTS = 30;
+            const SAMPLE_FOR_PROJ = 3;
+            const ELLIPSE = {
+                rx: 180,
+                ry: 70,
+                angleDeg: Math.random() * 35, // This defines the angle of PC1 for the generated data
+                jitter: 18
+            };
+
+            // Target factors with random orientation and separation
+            const TARGET_BASE_ANGLE = Math.random() * 20;
+            const TARGET_SEPARATION = 60 + Math.random() * 60; // Random separation between 60° and 120°
+            const TARGET2_DEG = TARGET_BASE_ANGLE;
+            const TARGET1_DEG = TARGET_BASE_ANGLE + TARGET_SEPARATION;
+
+            const messages = [{
+                progress: 0,
+                text: `We start with the true Principal Components of the data. Scroll to rotate them over a 180° range to find a more interpretable alignment with the target vectors (${TARGET_SEPARATION.toFixed(0)}° apart).`
+            }, {
+                progress: 0.33,
+                text: "As you rotate, notice how the projections of the data points (orange dots) onto the new axes change, along with their coordinates."
+            }, {
+                progress: 0.66,
+                text: "The cosine similarity score peaks when the rotated PCs are most closely aligned with the dashed target axes."
+            }, {
+                progress: 0.98,
+                text: "Click the button to jump to the mathematically optimal rotation, which maximizes the alignment score."
+            }];
+            let currentMessageIndex = -1;
+
+            // DOM refs
+            const viz = document.getElementById('viz');
+            const gridG = document.getElementById('grid');
+            const pointsG = document.getElementById('points');
+            const targetsG = document.getElementById('targets');
+            const pcAxesG = document.getElementById('pc-axes');
+            const projG = document.getElementById('projections');
+            const rotator = document.getElementById('rotator');
+
+            const thetaEl = document.getElementById('theta-deg');
+            const cosSimEl = document.getElementById('cos-sim');
+
+            const explanationText = document.getElementById('explanation');
+            const findOptimalBtn = document.getElementById('find-optimal-btn');
+
+            const toRad = d => d * Math.PI / 180;
+            const toDeg = r => r * 180 / Math.PI;
+            const clamp01 = x => Math.max(0, Math.min(1, x));
+
+            function grid() {
+                const step = 25;
+                for (let x = -250; x <= 250; x += step) {
+                    const line = document.createElementNS(SVG_NS, 'line');
+                    line.setAttribute('x1', x);
+                    line.setAttribute('x2', x);
+                    line.setAttribute('y1', -250);
+                    line.setAttribute('y2', 250);
+                    line.setAttribute('class', 'grid-line' + (x === 0 ? ' bold' : ''));
+                    gridG.appendChild(line);
+                }
+                for (let y = -250; y <= 250; y += step) {
+                    const line = document.createElementNS(SVG_NS, 'line');
+                    line.setAttribute('x1', -250);
+                    line.setAttribute('x2', 250);
+                    line.setAttribute('y1', y);
+                    line.setAttribute('y2', y);
+                    line.setAttribute('class', 'grid-line' + (y === 0 ? ' bold' : ''));
+                    gridG.appendChild(line);
+                }
+            }
+
+            function generateData() {
+                const pts = [];
+                const a = toRad(ELLIPSE.angleDeg);
+                const c = Math.cos(a);
+                const s = Math.sin(a);
+                for (let i = 0; i < NUM_POINTS; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const rBias = 1 - Math.pow(Math.random(), 1.8);
+                    const x0 = ELLIPSE.rx * rBias * Math.cos(ang) + (Math.random() - 0.5) * ELLIPSE.jitter;
+                    const y0 = ELLIPSE.ry * rBias * Math.sin(ang) + (Math.random() - 0.5) * ELLIPSE.jitter;
+                    const x = x0 * c - y0 * s;
+                    const y = x0 * s + y0 * c;
+                    pts.push({
+                        x,
+                        y
+                    });
+                }
+                return pts;
+            }
+
+            function drawPoints(pts) {
+                pts.forEach(p => {
+                    const dot = document.createElementNS(SVG_NS, 'circle');
+                    dot.setAttribute('cx', p.x.toFixed(2));
+                    dot.setAttribute('cy', p.y.toFixed(2));
+                    dot.setAttribute('r', 2.6);
+                    dot.setAttribute('class', 'point');
+                    pointsG.appendChild(dot);
+                });
+            }
+
+            function drawTargets() {
+                // --- Target 1 ---
+                const g1 = document.createElementNS(SVG_NS, 'g');
+                g1.setAttribute('transform', `rotate(${TARGET1_DEG})`);
+
+                const t1 = document.createElementNS(SVG_NS, 'line');
+                t1.setAttribute('class', 'target-axis');
+                t1.setAttribute('x1', -R);
+                t1.setAttribute('y1', 0);
+                t1.setAttribute('x2', R);
+                t1.setAttribute('y2', 0);
+                g1.appendChild(t1);
+
+                const t1lab = document.createElementNS(SVG_NS, 'text');
+                t1lab.setAttribute('class', 'target-label');
+                t1lab.textContent = 'T 1';
+
+                t1lab.setAttribute('x', R + 1);
+                t1lab.setAttribute('text-anchor', 'start');
+                t1lab.setAttribute('y', 4); // Consistent vertical alignment
+                g1.appendChild(t1lab);
+                targetsG.appendChild(g1);
+
+                // --- Target 2 ---
+                const g2 = document.createElementNS(SVG_NS, 'g');
+                g2.setAttribute('transform', `rotate(${TARGET2_DEG})`);
+
+                const t2 = document.createElementNS(SVG_NS, 'line');
+                t2.setAttribute('class', 'target-axis');
+                t2.setAttribute('x1', -R);
+                t2.setAttribute('y1', 0);
+                t2.setAttribute('x2', R);
+                t2.setAttribute('y2', 0);
+                g2.appendChild(t2);
+
+                const t2lab = document.createElementNS(SVG_NS, 'text');
+                t2lab.setAttribute('class', 'target-label');
+                t2lab.textContent = 'T 2';
+
+                t2lab.setAttribute('x', R + 1);
+                t2lab.setAttribute('text-anchor', 'start');
+                t2lab.setAttribute('y', 4); // Consistent vertical alignment
+                g2.appendChild(t2lab);
+                targetsG.appendChild(g2);
+            }
+
+            function stackedCosSim(pc1AngleDeg) {
+                const pc1_rad = toRad(pc1AngleDeg);
+                const target1_rad = toRad(TARGET1_DEG);
+                const target2_rad = toRad(TARGET2_DEG);
+                const sim1 = Math.cos(pc1_rad - target1_rad);
+                const sim2 = Math.sin(pc1_rad - target2_rad);
+                const dot_product = sim1 + sim2;
+                return dot_product / 2;
+            }
+
+            // Analytically finds the angle that maximizes the stacked cosine similarity.
+            function optimalThetaDeg() {
+                const target1_rad = toRad(TARGET1_DEG);
+                const target2_rad = toRad(TARGET2_DEG);
+                const a = Math.cos(target1_rad) - Math.sin(target2_rad);
+                const b = Math.sin(target1_rad) + Math.cos(target2_rad);
+                return toDeg(Math.atan2(b, a));
+            }
+
+            function pickSamplePoints(pts, k) {
+                const withAng = pts.map(p => ({
+                    p,
+                    ang: Math.atan2(p.y, p.x)
+                }))
+                    .sort((u, v) => u.ang - v.ang);
+                const step = Math.floor(withAng.length / k);
+                const chosen = [];
+                for (let i = 0; i < k; i++) chosen.push(withAng[i * step].p);
+                return chosen;
+            }
+
+            function createProjectionElements(samplePts) {
+                return samplePts.map((pt) => {
+                    const group = document.createElementNS(SVG_NS, 'g');
+                    const line1 = document.createElementNS(SVG_NS, 'line');
+                    line1.setAttribute('class', 'projection');
+                    const line2 = document.createElementNS(SVG_NS, 'line');
+                    line2.setAttribute('class', 'projection');
+                    const foot1 = document.createElementNS(SVG_NS, 'circle');
+                    foot1.setAttribute('class', 'foot');
+                    foot1.setAttribute('r', 2.8);
+                    const foot2 = document.createElementNS(SVG_NS, 'circle');
+                    foot2.setAttribute('class', 'foot');
+                    foot2.setAttribute('r', 2.8);
+                    const label = document.createElementNS(SVG_NS, 'text');
+                    label.setAttribute('class', 'coord-label');
+                    label.setAttribute('text-anchor', 'start');
+
+                    group.appendChild(line1);
+                    group.appendChild(line2);
+                    group.appendChild(foot1);
+                    group.appendChild(foot2);
+                    group.appendChild(label);
+                    projG.appendChild(group);
+                    return {
+                        pt,
+                        line1,
+                        line2,
+                        foot1,
+                        foot2,
+                        label
+                    };
+                });
+            }
+
+            function updateProjections(elems, thetaDeg) {
+                const t = toRad(thetaDeg);
+                // PC1' unit vector
+                const r1 = {
+                    x: Math.cos(t),
+                    y: Math.sin(t)
+                };
+                // PC2' unit vector (rotated -90 deg from PC1)
+                const r2 = {
+                    x: Math.sin(t),
+                    y: -Math.cos(t)
+                };
+
+                elems.forEach(({
+                    pt,
+                    line1,
+                    line2,
+                    foot1,
+                    foot2,
+                    label
+                }) => {
+                    const u = pt.x * r1.x + pt.y * r1.y; // coordinate on PC1
+                    const v = pt.x * r2.x + pt.y * r2.y; // coordinate on PC2
+                    const f1 = {
+                        x: r1.x * u,
+                        y: r1.y * u
+                    };
+                    const f2 = {
+                        x: r2.x * v,
+                        y: r2.y * v
+                    };
+
+                    line1.setAttribute('x1', pt.x.toFixed(2));
+                    line1.setAttribute('y1', pt.y.toFixed(2));
+                    line1.setAttribute('x2', f1.x.toFixed(2));
+                    line1.setAttribute('y2', f1.y.toFixed(2));
+                    line2.setAttribute('x1', pt.x.toFixed(2));
+                    line2.setAttribute('y1', pt.y.toFixed(2));
+                    line2.setAttribute('x2', f2.x.toFixed(2));
+                    line2.setAttribute('y2', f2.y.toFixed(2));
+
+                    foot1.setAttribute('cx', f1.x.toFixed(2));
+                    foot1.setAttribute('cy', f1.y.toFixed(2));
+                    foot2.setAttribute('cx', f2.x.toFixed(2));
+                    foot2.setAttribute('cy', f2.y.toFixed(2));
+
+                    label.setAttribute('x', (pt.x + 8).toFixed(2));
+                    label.setAttribute('y', (pt.y - 6).toFixed(2));
+                    label.textContent = `(${u.toFixed(0)}, ${v.toFixed(0)})`;
+                });
+            }
+
+            // --- Main ---
+
+            // Build scene
+            grid();
+            const data = generateData();
+            drawPoints(data);
+            drawTargets();
+            const sample = pickSamplePoints(data, SAMPLE_FOR_PROJ);
+            const projElems = createProjectionElements(sample);
+
+            const INITIAL_THETA = ELLIPSE.angleDeg;
+            const OPT_THETA = optimalThetaDeg();
+
+            function updateScene(scrollProgress) {
+                const p = clamp01(scrollProgress);
+
+                const rotationAmount = p * 180; // Amount of rotation from scroll
+                const currentTheta = INITIAL_THETA + rotationAmount; // Final angle
+
+                pcAxesG.setAttribute('transform', `rotate(${currentTheta})`);
+                updateProjections(projElems, currentTheta);
+
+                // thetaEl.textContent = `${currentTheta.toFixed(1)}°`;
+                // Display the relative rotation amount
+                thetaEl.textContent = `${rotationAmount.toFixed(1)}°`;
+
+
+                cosSimEl.textContent = stackedCosSim(currentTheta).toFixed(2);
+
+                let messageIndexToShow = 0;
+                for (let i = messages.length - 1; i >= 0; i--) {
+                    if (p >= messages[i].progress) {
+                        messageIndexToShow = i;
+                        break;
+                    }
+                }
+                if (messageIndexToShow !== currentMessageIndex) {
+                    explanationText.innerHTML = messages[messageIndexToShow].text;
+                    currentMessageIndex = messageIndexToShow;
+                }
+            }
+
+            function onScroll() {
+                const scroller = document.getElementById('scroller');
+                const total = scroller.scrollHeight - window.innerHeight;
+                const progress = total > 0 ? window.scrollY / total : 0;
+                updateScene(progress);
+            }
+
+            function handleOptimalClick() {
+                const scroller = document.getElementById('scroller');
+                const totalScrollHeight = scroller.scrollHeight - window.innerHeight;
+
+                // Calculate how much we need to rotate from the start
+                let rotationNeeded = OPT_THETA - INITIAL_THETA;
+                // Normalize to the shortest rotation (e.g., -20° is the same as +160°)
+                if (rotationNeeded < 0) { rotationNeeded += 180; }
+
+                const targetProgress = rotationNeeded / 180;
+
+                const targetScrollY = targetProgress * totalScrollHeight;
+
+                window.scrollTo({
+                    top: targetScrollY,
+                    behavior: 'smooth'
+                });
+            }
+
+            findOptimalBtn.addEventListener('click', handleOptimalClick);
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', onScroll);
+
+            // Set initial state on load
+            onScroll();
+        });
+    </script>
+</body>
+
+</html>

@@ -10,6 +10,7 @@
 ---
 
 ### [On Finding the Optimal Rotation of Principal Components for Structural Interpretation](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5567899)
+> [Visualiztion of the Proposed Method](/research/illustratoin.html)
 
 **Abstract:** This paper addresses the challenge of interpreting statistical factors derived from principal component analysis (PCA), a common issue in empirical macroeconomics. Traditional methods for rotating these factors to achieve economic meaning are often ad hoc and subjective. The paper proposes a novel approach that systematically finds an interpretable rotation by maximizing the cosine similarity between the statistical factor loadings and a target structure. The maximization problem is shown to be equivalent to the Orthogonal Procrustes Problem, which has a unique, optimal solution provided by Singular Value Decomposition (SVD).
 
