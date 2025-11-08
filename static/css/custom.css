@@ -52,6 +52,11 @@ ul.gk-social-icons-list {
   padding-bottom: 0 !important;
 }
 
+/* justify text */
+p {
+  text-align: justify;
+}
+
 /* Responsive design for smaller screens */
 @media (max-width: 768px) {
   .home-content {
@@ -81,5 +86,11 @@ ul.gk-social-icons-list {
     margin: 0 auto;
     /* Centers the right column */
   }
+
+  /* Add this to remove justification from ALL paragraphs on mobile */
+  p {
+    text-align: left;
+  }
+
   
 }
