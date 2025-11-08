@@ -17,6 +17,7 @@
 ---
 
 ### **Transitory Shocks and Consumption Dynamics: Pent-Up Demand or Hand-to-Mouth?** *(with [Martin Brown](https://sites.google.com/view/martinbrown) and [Jan Toczynski](https://www.jantoczynski.com/home))*
+> *Draft available upon request*
 
 **Abstract:** We examine the recovery of U.S. consumer spending following the COVID-19 recession using monthly transaction data for over 34,000 individuals. We find no evidence of pent-up demand driven by forced cutbacks on in-person services or curtailed purchases of durables. Instead, spending dynamics are largely consistent with hand-to-mouth behavior: Expenditures during and after the recession are correlated with income changes, especially among households with low liquidity buffers. These results underscore the central role of income and liquidity, rather than sentiment or forced savings, in driving the dynamics of consumer spending.
 
