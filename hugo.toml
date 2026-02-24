@@ -3,6 +3,7 @@ languageCode = 'en-us'
 title = 'Mohamed Hamoud'
 theme = 'gokarna-hugo'
 canonifyURLs = true
+enableRobotsTXT = true
 
 
 [params]
